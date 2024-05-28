@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>CRUD page</title>
+<meta charset="UTF-8">
+</head>
+<body>
+	<h1>WebSocket CRUD</h1>
+	<div>
+		<input type="text" id="newItemName" placeholder="Enter item name" />
+		<button onclick="createItem()">Create</button>
+	</div>
+	<div id="items"></div>
+
+	<script type="text/javascript">
+    var socket = new WebSocket("ws://localhost:8081/ws/items");
+
+    socket.onmessage = function(event) {
+        var items = JSON.parse(event.data);
+        var itemsDiv = document.getElementById("items");
+        itemsDiv.innerHTML = "";
+        items.forEach(function(item) {
+            var itemDiv = document.createElement("div");
+            itemDiv.innerHTML = `
+                <span>${item.name}</span>
+                <button onclick="updateItem(${item.id}, prompt('Enter new name:', '${item.name}'))">Update</button>
+                <button onclick="deleteItem(${item.id})">Delete</button>
+            `;
+            itemsDiv.appendChild(itemDiv);
+        });
+    };
+
+    function createItem() {
+        var input = document.getElementById("newItemName");
+        var name = input.value;
+        socket.send(JSON.stringify({ action: "create", name: name }));
+        input.value = "";
+    }
+
+    function updateItem(id, name) {
+        if (name) {
+            socket.send(JSON.stringify({ action: "update", id: id, name: name }));
+        }
+    }
+
+    function deleteItem(id) {
+        socket.send(JSON.stringify({ action: "delete", id: id }));
+    }
+</script>
+</body>
+</html>
